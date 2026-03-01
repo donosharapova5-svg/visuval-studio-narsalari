@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abdusattorov Abdulloh</title>
+<style>
+body{
+margin:0;
+font-family:Arial, sans-serif;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+text-align:center;
+}
+h1{margin:10px;}
+.brand{
+background:gold;
+color:black;
+padding:6px 20px;
+border-radius:20px;
+display:inline-block;
+}
+.container{
+display:flex;
+flex-wrap:wrap;
+justify-content:space-around;
+margin-top:15px;
+}
+.player{
+background:white;
+color:black;
+width:45%;
+min-width:300px;
+padding:15px;
+border-radius:15px;
+margin:10px;
+box-shadow:0 0 15px rgba(0,0,0,0.5);
+transition:0.3s;
+}
+.player:hover{transform:scale(1.03);}
+button{
+padding:8px 15px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin:4px;
+}
+.answer{background:#dbe4ff;}
+.answer:hover{background:#9bb5ff;}
+.start{background:limegreen;color:white;}
+.stop{background:red;color:white;}
+.admin{background:orange;color:white;}
+.score{font-size:18px;}
+#winner{font-size:22px;margin-top:10px;}
+.hidden{display:none;}
+#timer{font-weight:bold;}
+@media(max-width:768px){.player{width:90%;}}
+</style>
+</head>
+<body>
+
+<h1>Arab Tili A1–A2 Duel</h1>
+<div class="brand">
+  <img src="mudarris_logo.png" alt="Mudarris Logo" style="height:50px; vertical-align:middle;">
+  Mudarris
+</div>
+
+<h3>Qolgan vaqt: <span id="timer">60</span> soniya</h3>
+
+<br><br>
+<input id="name1" placeholder="O‘yinchi 1 ismi">
+<input id="name2" placeholder="O‘yinchi 2 ismi">
+<button class="start" onclick="startGame()">Boshlash</button>
+<button class="stop" onclick="stopGame()">To‘xtatish</button>
+<button class="admin" onclick="showAdmin()">Admin</button>
+
+<div class="container">
+<div class="player">
+<h2 id="p1">O‘yinchi 1</h2>
+<div id="q1"></div>
+<div id="a1"></div>
+<div class="score">Ball: <span id="score1">0</span></div>
+</div>
+
+<div class="player">
+<h2 id="p2">O‘yinchi 2</h2>
+<div id="q2"></div>
+<div id="a2"></div>
+<div class="score">Ball: <span id="score2">0</span></div>
+</div>
+</div>
+
+<h2 id="winner"></h2>
+
+<div id="adminPanel" class="hidden">
+<h3>Admin Login</h3>
+<input type="password" id="adminPass" placeholder="Parol">
+<button onclick="checkAdmin()">Kirish</button>
+<div id="ranking"></div>
+</div>
+
+<script>
+let score1=0, score2=0, gameActive=false, time=60, timerInterval;
+
+const words=[
+["كتاب","Kitob"],["قلم","Qalam"],["بيت","Uy"],["مدرسة","Maktab"],
+["سيارة","Mashina"],["باب","Eshik"],["نافذة","Oyna"],
+["ولد","Bola"],["بنت","Qiz"],["جميل","Chiroyli"],
+["كبير","Katta"],["صغير","Kichik"]
+];
+
+function generateQuestion(){
+let random=Math.random();
+if(random<0.5){
+let i=Math.floor(Math.random()*words.length);
+let correct=words[i][1];
+let wrong1=words[Math.floor(Math.random()*words.length)][1];
+let wrong2=words[Math.floor(Math.random()*words.length)][1];
+return{
+question:words[i][0]+" nima degani?",
+answers:shuffle([correct,wrong1,wrong2]),
+correct:correct
+};
+}else{
+let templates=[
+["البيت ___ كبير","هو"],
+["أنا ___ طالب","أنا"],
+["الولد ___ المدرسة","في"],
+["القلم ___ الحقيبة","في"]
+];
+let t=templates[Math.floor(Math.random()*templates.length)];
+let wrong1="من";
+let wrong2="إلى";
+return{
+question:t[0],
+answers:shuffle([t[1],wrong1,wrong2]),
+correct:t[1]
+};
+}
+}
+
+function shuffle(a){return a.sort(()=>Math.random()-0.5);}
+
+function loadQuestion(p){
+if(!gameActive) return;
+let q=generateQuestion();
+document.getElementById("q"+p).innerText=q.question;
+let div=document.getElementById("a"+p);
+div.innerHTML="";
+q.answers.forEach(ans=>{
+let btn=document.createElement("button");
+btn.className="answer";
+btn.innerText=ans;
+btn.onclick=function(){
+if(!gameActive) return;
+if(ans===q.correct){
+if(p===1){score1++;score1Display();}
+else{score2++;score2Display();}
+}
+loadQuestion(p);
+};
+div.appendChild(btn);
+});
+}
+
+function score1Display(){document.getElementById("score1").innerText=score1;}
+function score2Display(){document.getElementById("score2").innerText=score2;}
+
+function startTimer() {
+    time = 60;
+    document.getElementById("timer").innerText = time;
+    timerInterval = setInterval(() => {
+        if(time > 0){
+            time--;
+            document.getElementById("timer").innerText = time;
+        } else {
+            clearInterval(timerInterval);
+            stopGame();
+        }
+    }, 1000);
+}
+
+function startGame(){
+score1=0; score2=0;
+score1Display(); score2Display();
+document.getElementById("winner").innerText="";
+document.getElementById("p1").innerText=name1.value||"O‘yinchi 1";
+document.getElementById("p2").innerText=name2.value||"O‘yinchi 2";
+gameActive=true;
+loadQuestion(1);
+loadQuestion(2);
+startTimer();
+}
+
+function stopGame(){
+gameActive=false;
+clearInterval(timerInterval);
+let winner="";
+if(score1>score2){winner="🏆 "+p1.innerText+" g‘olib!";}
+else if(score2>score1){winner="🏆 "+p2.innerText+" g‘olib!";}
+else{winner="🤝 Durrang!";}
+document.getElementById("winner").innerText=winner;
+saveRanking(p1.innerText,score1);
+saveRanking(p2.innerText,score2);
+showRanking();
+}
+
+function saveRanking(name,score){
+let r=JSON.parse(localStorage.getItem("ranking"))||[];
+r.push({name,score});
+r.sort((a,b)=>b.score-a.score);
+localStorage.setItem("ranking",JSON.stringify(r.slice(0,20)));
+}
+
+function showRanking(){
+let r=JSON.parse(localStorage.getItem("ranking"))||[];
+let html="";
+r.forEach(x=>{html+=x.name+" - "+x.score+"<br>";});
+ranking.innerHTML=html;
+}
+
+function showAdmin(){adminPanel.classList.toggle("hidden");}
+
+function checkAdmin(){
+if(adminPass.value==="Abdulloh"){
+showRanking();
+}else{alert("Noto‘g‘ri parol");}
+}
+</script>
+</body>
+</html>
